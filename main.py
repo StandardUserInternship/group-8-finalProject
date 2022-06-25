@@ -102,6 +102,12 @@ def logout():
     logout_user()
     return redirect(url_for('login'))
 
+#Chart routes
+@app.route("/bar_chart")
+def bar_chart():
+    #can add legend and other headers later and change the example data to data from db
+    return render_template('bar_chart.html', title ='Bar Chart')
+
 #MAIN CALL
 if __name__ == '__main__':
     app.run(debug=True)
