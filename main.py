@@ -7,6 +7,7 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField
 from wtforms.validators import InputRequired, Length, ValidationError
 from flask_bcrypt import Bcrypt
+from sqlalchemy.sql import text
 
 app = Flask(__name__)
 db = SQLAlchemy(app)
@@ -107,6 +108,26 @@ def logout():
 def bar_chart():
     #can add legend and other headers later and change the example data to data from db
     return render_template('bar_chart.html', title ='Bar Chart')
+
+@app.route("/line_chart")
+def line_chart():
+    return render_template('line_chart.html', title ='Line Chart')
+
+@app.route("/pie_chart")
+def pie_chart():
+    return render_template('pie_chart.html', title = 'Pie Chart')
+    
+#Database routes
+@app.route('/db')
+def testdb():
+    try:
+        db.session.query(text('1')).from_statement(text('SELECT 1')).all()
+        return '<h1>It works.</h1>'
+    except Exception as e:
+        # e holds description of the error
+        error_text = "<p>The error:<br>" + str(e) + "</p>"
+        hed = '<h1>Something is broken.</h1>'
+        return hed + error_text
 
 #MAIN CALL
 if __name__ == '__main__':
