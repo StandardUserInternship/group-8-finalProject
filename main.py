@@ -2,13 +2,13 @@ from flask import Flask, render_template, session, url_for, redirect, request, s
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user, current_user
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField, SelectField
+from wtforms import StringField, PasswordField, SubmitField, SelectField, FileField
 from wtforms.validators import InputRequired, Length, ValidationError
 from flask_bcrypt import Bcrypt
 from datetime import datetime
 from atexit import register
-from sqlalchemy.sql import text
 from io import BytesIO
+from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 db = SQLAlchemy(app)
@@ -35,7 +35,8 @@ class User(db.Model, UserMixin):
     dateCreated = db.Column(db.String(80), nullable=False)
     lastLogin = db.Column(db.String(80), nullable=False)
 
-#Registeration Form
+
+#Registeration Form----------------------------------------------------------------------------------------------------
 class RegisterForm(FlaskForm):
     firstName = StringField(validators=[InputRequired(), Length(min=4, max=20)], render_kw={"placeholder": "First Name"})
     lastName = StringField(validators=[InputRequired(), Length(min=4, max=20)], render_kw={"placeholder": "Last Name"})
@@ -62,26 +63,17 @@ class LoginForm(FlaskForm):
 
     submit = SubmitField('Login')
 
-#Dashboard form
-class DashboardForm(FlaskForm):
-    dataSet = SelectField('DataSet', choices=[('Data Set', 'Data Set'),('Flavors','Flavors'), ('Crimes in Atlanta', 'Crimes in Atlanta')])
-    graphType = SelectField('GraphType', choices=[('Graph Type','Graph Type'),('Line','Line'), ('Bar','Bar'), ('Radar','Radar'),
-     ('Doughnut and Pie','Doughnut and Pie'), ('Polar Area','Polar Area'), ('Bubble','Bubble'), ('Scatter','Scatter')])
+#Login form
+class DashForm(FlaskForm):
+    dataSet = FileField()
+    graphType = SelectField('Data Set', choices=[('line', 'Line Graph'), ('bar', 'Bar Graph')])
 
-    submit = SubmitField('Create Graph')
+    submit = SubmitField('Submit')
 
-#Page Routes
+#Page Routes-------------------------------------------------------------------------------------------------------------
 @app.route('/') 
 def home():
     return redirect(url_for('login'))
-
-@app.route('/dashboard', methods=['GET', 'POST'])
-@login_required 
-def dashboard():
-    form = DashboardForm()
-    if form.validate_on_submit():
-        return render_template("content.html", data={'dataSet':form.dataSet.data , 'graphType':form.graphType.data}) #DATA NOT PASSING TO content.html FIX ME
-    return render_template("dashboard.html", form=form)
 
 @app.route('/admin', methods=['GET', 'POST'])
 @login_required
@@ -98,12 +90,25 @@ def profile():
     user = current_user
     return render_template("profile.html", user=user)
 
+@app.route('/dashboard', methods=['GET', 'POST'])
+@login_required 
+def dashboard():
+    form=DashForm()
+
+    if form.validate_on_submit():
+        filename = secure_filename(form.dataSet.data.filename)
+        session['dataSet'] = filename 
+        print(session['dataSet'])
+        return redirect(url_for('content'))
+
+    return render_template("dashboard.html", form=form)
+
 @app.route('/content', methods=['GET', 'POST'])
 @login_required 
 def content():
     return render_template("content.html")
 
-#Chart routes
+#Chart routes--------------------------------------------------------------------------------------------------
 @app.route("/bar_chart")
 def bar_chart():
     #can add legend and other headers later and change the example data to data from db
@@ -117,7 +122,7 @@ def line_chart():
 def pie_chart():
     return render_template('pie_chart.html', title = 'Pie Chart')
 
-#Auth Routes
+#Auth Routes-------------------------------------------------------------------------------------------------
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     logout_user()
@@ -152,19 +157,14 @@ def logout():
     logout_user()
     return redirect(url_for('login'))
 
-#Database routes
-class Upload(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    filename = db.Column(db.String(50))
-    data = db.Column(db.LargeBinary)
-
+#Database routes-----------------------------------------------------------------------------------------------------------
 @app.route('/upload', methods=['GET', 'POST'])
 def upload():
     db.create_all()
     if request.method == 'POST':
         file = request.files['file']
         
-        upload = Upload(filename=file.filename, data=file.read())
+        upload = User(filename=file.filename, data=file.read())
         db.session.add(upload)
         db.session.commit()
 
@@ -173,8 +173,9 @@ def upload():
 
 @app.route('/download/<upload_id>')
 def download(upload_id):
-    upload = Upload.query.filter_by(id=upload_id).first()
+    upload = User.query.filter_by(id=upload_id).first()
     return send_file(BytesIO(upload.data), attachment_filename=upload.filename, as_attachment=True)
+#------------------------------------------------------------------------------------------------------------
 
 #MAIN CALL
 if __name__ == '__main__':
