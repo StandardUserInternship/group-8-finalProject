@@ -66,7 +66,8 @@ class LoginForm(FlaskForm):
 #Login form
 class DashForm(FlaskForm):
     dataSet = FileField()
-    graphType = SelectField('Data Set', choices=[('line', 'Line Graph'), ('bar', 'Bar Graph')])
+    graphType = SelectField('Data Set', choices=[('line', 'Line Graph'), ('bar', 'Bar Graph'), ('radar', 'Radar Graph')
+    , ('doughnut_pie', 'Doughnut & Pie Graph'), ('polar', 'Polar Graph'), ('bubble', 'Bubble Graph'), ('scatter', 'Scatter Graph')])
 
     submit = SubmitField('Submit')
 
