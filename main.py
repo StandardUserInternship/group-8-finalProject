@@ -98,7 +98,7 @@ def dashboard():
     if form.validate_on_submit():
         filename = secure_filename(form.dataSet.data.filename)
         session['dataSet'] = filename 
-        print(session['dataSet'])
+        session['graphType'] = form.graphType.data
         return redirect(url_for('content'))
 
     return render_template("dashboard.html", form=form)
