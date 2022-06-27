@@ -1,20 +1,21 @@
-from flask import Flask, render_template, session, url_for, redirect, request, send_file
+from atexit import register
+import bcrypt
+from flask import Flask, render_template, url_for, redirect, request, send_file
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user, current_user
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField, SelectField
+from wtforms import StringField, PasswordField, SubmitField
 from wtforms.validators import InputRequired, Length, ValidationError
 from flask_bcrypt import Bcrypt
-from datetime import datetime
-from atexit import register
 from sqlalchemy.sql import text
 from io import BytesIO
+
 
 app = Flask(__name__)
 db = SQLAlchemy(app)
 bcrypt = Bcrypt(app)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db' 
-app.config['SECRET_KEY'] = 'mostsecretkeyevermade'
+app.config['SECRET_KEY'] = 'This is a secretkey!'
 
 login_manager = LoginManager()
 login_manager.init_app(app)
@@ -24,27 +25,19 @@ login_manager.login_view = 'login'
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-#User Class
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     firstName = db.Column(db.String(20), nullable=False, unique=False)
     lastName = db.Column(db.String(20), nullable=False, unique=False)
     email = db.Column(db.String(20), nullable=False, unique=True)
     password = db.Column(db.String(80), nullable=False)
-    adminControl = db.Column(db.String(80), nullable=False)
-    dateCreated = db.Column(db.String(80), nullable=False)
-    lastLogin = db.Column(db.String(80), nullable=False)
 
 #Registeration Form
 class RegisterForm(FlaskForm):
     firstName = StringField(validators=[InputRequired(), Length(min=4, max=20)], render_kw={"placeholder": "First Name"})
     lastName = StringField(validators=[InputRequired(), Length(min=4, max=20)], render_kw={"placeholder": "Last Name"})
-    email = StringField(validators=[InputRequired(), Length(min=4, max=40)], render_kw={"placeholder": "Email"})
+    email = StringField(validators=[InputRequired(), Length(min=4, max=20)], render_kw={"placeholder": "Email"})
     password = PasswordField(validators=[InputRequired(), Length(min=8, max=20)], render_kw={"placeholder": "Password"})
-    adminControl = PasswordField(validators=[Length(min=8, max=20)], render_kw={"placeholder": "Admin Password (Optional)"})
-    now = datetime.now()
-    dateCreated = now.strftime("%d/%m/%Y %H:%M:%S")
-    lastLogin = now.strftime("%d/%m/%Y %H:%M:%S")
 
     submit = SubmitField('Register')
 
@@ -52,23 +45,12 @@ class RegisterForm(FlaskForm):
         if existing_user_email := User.query.filter_by(email=email.data).first():
             raise ValidationError('That email already exists. Please choose a different one.')
 
-    def validate_admin(self, adminControl):
-        return "NotAdmin" if self.adminControl.data != "Admin12345" else "admin"
-
 #Login form
 class LoginForm(FlaskForm):
     email = StringField(validators=[InputRequired(), Length(min=4, max=20)], render_kw={"placeholder": "Email"})
     password = PasswordField(validators=[InputRequired(), Length(min=8, max=20)], render_kw={"placeholder": "Password"})
 
     submit = SubmitField('Login')
-
-#Dashboard form
-class DashboardForm(FlaskForm):
-    dataSet = SelectField('DataSet', choices=[('Data Set', 'Data Set'),('Flavors','Flavors'), ('Crimes in Atlanta', 'Crimes in Atlanta')])
-    graphType = SelectField('GraphType', choices=[('Graph Type','Graph Type'),('Line','Line'), ('Bar','Bar'), ('Radar','Radar'),
-     ('Doughnut and Pie','Doughnut and Pie'), ('Polar Area','Polar Area'), ('Bubble','Bubble'), ('Scatter','Scatter')])
-
-    submit = SubmitField('Create Graph')
 
 #Page Routes
 @app.route('/') 
@@ -78,44 +60,17 @@ def home():
 @app.route('/dashboard', methods=['GET', 'POST'])
 @login_required 
 def dashboard():
-    form = DashboardForm()
-    if form.validate_on_submit():
-        return render_template("content.html", data={'dataSet':form.dataSet.data , 'graphType':form.graphType.data}) #DATA NOT PASSING TO content.html FIX ME
-    return render_template("dashboard.html", form=form)
-
-@app.route('/admin', methods=['GET', 'POST'])
-@login_required
-def admin():
-    user = current_user
-    if user.adminControl != "admin": 
-        return render_template("adminDeny.html")
-    data = User.query.all()
-    return render_template("admin.html", data=data)
+    return render_template("dashboard.html")
 
 @app.route('/profile')
 @login_required 
 def profile():
-    user = current_user
-    return render_template("profile.html", user=user)
+    return render_template("profile.html")
 
-@app.route('/content', methods=['GET', 'POST'])
+@app.route('/content')
 @login_required 
 def content():
     return render_template("content.html")
-
-#Chart routes
-@app.route("/bar_chart")
-def bar_chart():
-    #can add legend and other headers later and change the example data to data from db
-    return render_template('bar_chart.html', title ='Bar Chart')
-
-@app.route("/line_chart")
-def line_chart():
-    return render_template('line_chart.html', title ='Line Chart')
-
-@app.route("/pie_chart")
-def pie_chart():
-    return render_template('pie_chart.html', title = 'Pie Chart')
 
 #Auth Routes
 @app.route('/login', methods=['GET', 'POST'])
@@ -137,9 +92,7 @@ def sign_up():
 
     if form.validate_on_submit():
         hashed_password = bcrypt.generate_password_hash(form.password.data)
-        adminAccess = form.validate_admin(form.adminControl.data)
-        new_user = User(firstName=form.firstName.data, lastName=form.lastName.data, email=form.email.data,
-         password=hashed_password, adminControl=adminAccess, dateCreated=form.dateCreated, lastLogin = form.lastLogin)
+        new_user = User(firstName=form.firstName.data, lastName=form.lastName.data, email=form.email.data, password=hashed_password)
         db.session.add(new_user)
         db.session.commit()
         return redirect(url_for('login'))
@@ -152,23 +105,44 @@ def logout():
     logout_user()
     return redirect(url_for('login'))
 
+#Chart routes
+@app.route("/bar_chart")
+def bar_chart():
+    #can add legend and other headers later and change the example data to data from db
+    return render_template('bar_chart.html', title ='Bar Chart')
+
+@app.route("/line_chart")
+def line_chart():
+    return render_template('line_chart.html', title ='Line Chart')
+
+@app.route("/pie_chart")
+def pie_chart():
+    return render_template('pie_chart.html', title = 'Pie Chart')
+    
 #Database routes
-@app.route('/upload', methods=['GET', 'POST'])
+
+class Upload(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    filename = db.Column(db.String(50))
+    data = db.Column(db.LargeBinary)
+
+
+@app.route('/content', methods=['GET', 'POST'])
 def upload():
     db.create_all()
     if request.method == 'POST':
         file = request.files['file']
         
-        upload = User(filename=file.filename, data=file.read())
+        upload = Upload(filename=file.filename, data=file.read())
         db.session.add(upload)
         db.session.commit()
 
         return f'Uploaded: {file.filename}'
-    return render_template('upload.html')
+    return render_template('content.html')
 
 @app.route('/download/<upload_id>')
 def download(upload_id):
-    upload = User.query.filter_by(id=upload_id).first()
+    upload = Upload.query.filter_by(id=upload_id).first()
     return send_file(BytesIO(upload.data), attachment_filename=upload.filename, as_attachment=True)
 
 #MAIN CALL
