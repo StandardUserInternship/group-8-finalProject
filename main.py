@@ -153,13 +153,18 @@ def logout():
     return redirect(url_for('login'))
 
 #Database routes
+class Upload(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    filename = db.Column(db.String(50))
+    data = db.Column(db.LargeBinary)
+
 @app.route('/upload', methods=['GET', 'POST'])
 def upload():
     db.create_all()
     if request.method == 'POST':
         file = request.files['file']
         
-        upload = User(filename=file.filename, data=file.read())
+        upload = Upload(filename=file.filename, data=file.read())
         db.session.add(upload)
         db.session.commit()
 
@@ -168,7 +173,7 @@ def upload():
 
 @app.route('/download/<upload_id>')
 def download(upload_id):
-    upload = User.query.filter_by(id=upload_id).first()
+    upload = Upload.query.filter_by(id=upload_id).first()
     return send_file(BytesIO(upload.data), attachment_filename=upload.filename, as_attachment=True)
 
 #MAIN CALL
