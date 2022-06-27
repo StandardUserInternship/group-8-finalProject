@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Dashboard</title>
+    <title>Admin</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet"
         integrity="sha384-0evHe/X+R7YkIZDRvuzKMRqM+OrBnVFBL6DOitfPri4tjfHxaWutUpFmBp4vmVor" crossorigin="anonymous">
 </head>
@@ -32,38 +32,42 @@
         <button type="button" class="btn btn-outline-light"
             onclick="window.location.href='{{ url_for('login') }}';">Logout</button>
     </nav>
-
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-pprn3073KE6tl6bjs2QrFaJGz5/SUsLqktiwsUTF55Jfv3qYSDhgCecCxMW52nD2" crossorigin="anonymous">
         </script>
 
-    <head>
-        <meta charset="UTF-8">
-        <meta http-equiv="X-UA-Compatible" content="IE=edge">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>File Upload Example</title>
-        <style>
-            body {
-                margin: 0;
-            }
-
-            .center {
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                height: 100vh;
-            }
-        </style>
-    </head>
-
-    <body>
-        <div class="center">
-            <form method="POST" action="/content" enctype="multipart/form-data" name="dataset">
-                <input type="file" name="file" accept=".csv">
-                <input type="submit" name="Submit">
-            </form>
-        </div>
-    </body>
+    <table class="table">
+        <link rel="stylesheet" href="/static/style.css">
+        <tr class="table__header">
+            <th>ID</th>
+            <th>First Name</th>
+            <th>Last Name</th>
+            <th>Email</th>
+            <th>Access</th>
+            <th>Date Created</th>
+            <th>Last Login</th>
+            <th>Actions</th>
+        </tr>
+        {% for user in data %}
+        <tr>
+            <td> {{ user.id }} </td>
+            <td> {{ user.firstName }} </td>
+            <td> {{ user.lastName }} </td>
+            <td> {{ user.email }} </td>
+            <td> {{ user.adminControl }} </td>
+            <td> {{ user.dateCreated }} </td>
+            <td> {{ user.lastLogin }} </td>
+            <!-- implement ban button onClick change adminControl to "ban" or "unban"-->
+            <td>
+                {% if user.adminControl == "banned12" %}
+                <button class="btn btn-outline-dark">Unban</button>
+                {% else %}
+                <button class="btn btn-outline-dark">Ban</button>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
 </body>
 
 </html>
