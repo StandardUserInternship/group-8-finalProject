@@ -1,6 +1,6 @@
 from atexit import register
 import bcrypt
-from flask import Flask, render_template, url_for, redirect
+from flask import Flask, render_template, url_for, redirect, request, send_file
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user, current_user
 from flask_wtf import FlaskForm
@@ -8,6 +8,7 @@ from wtforms import StringField, PasswordField, SubmitField
 from wtforms.validators import InputRequired, Length, ValidationError
 from flask_bcrypt import Bcrypt
 from sqlalchemy.sql import text
+from io import BytesIO
 
 app = Flask(__name__)
 db = SQLAlchemy(app)
@@ -118,16 +119,23 @@ def pie_chart():
     return render_template('pie_chart.html', title = 'Pie Chart')
     
 #Database routes
-@app.route('/db')
-def testdb():
-    try:
-        db.session.query(text('1')).from_statement(text('SELECT 1')).all()
-        return '<h1>It works.</h1>'
-    except Exception as e:
-        # e holds description of the error
-        error_text = "<p>The error:<br>" + str(e) + "</p>"
-        hed = '<h1>Something is broken.</h1>'
-        return hed + error_text
+@app.route('/upload', methods=['GET', 'POST'])
+def upload():
+    db.create_all()
+    if request.method == 'POST':
+        file = request.files['file']
+        
+        upload = User(filename=file.filename, data=file.read())
+        db.session.add(upload)
+        db.session.commit()
+
+        return f'Uploaded: {file.filename}'
+    return render_template('upload.html')
+
+@app.route('/download/<upload_id>')
+def download(upload_id):
+    upload = User.query.filter_by(id=upload_id).first()
+    return send_file(BytesIO(upload.data), attachment_filename=upload.filename, as_attachment=True)
 
 #MAIN CALL
 if __name__ == '__main__':
