@@ -26,6 +26,7 @@ def load_user(user_id):
 
 #User Class
 class User(db.Model, UserMixin):
+    
     id = db.Column(db.Integer, primary_key=True)
     firstName = db.Column(db.String(20), nullable=False, unique=False)
     lastName = db.Column(db.String(20), nullable=False, unique=False)
@@ -100,6 +101,12 @@ def dashboard():
         filename = secure_filename(form.dataSet.data.filename)
         session['dataSet'] = filename 
         session['graphType'] = form.graphType.data
+        if form.graphType.data == 'line':
+            return render_template("line_chart.html")
+        elif form.graphType.data =='bar':
+            return render_template("bar_chart.html")
+        elif form.graphType.data =='doughnut_pie':
+            return render_template("pie_chart.html")
         return redirect(url_for('content'))
 
     return render_template("dashboard.html", form=form)
@@ -177,6 +184,7 @@ def download(upload_id):
     upload = User.query.filter_by(id=upload_id).first()
     return send_file(BytesIO(upload.data), attachment_filename=upload.filename, as_attachment=True)
 #------------------------------------------------------------------------------------------------------------
+
 
 #MAIN CALL
 if __name__ == '__main__':
