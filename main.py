@@ -11,13 +11,13 @@ from io import BytesIO
 from werkzeug.utils import secure_filename
 
 #imports for user account profile picture---------------------------------------------
-import os
-import secrets
-from PIL import Image
-from flaskblog import app, db, bcrypt, routes
-from flaskblog.forms import RegistrationForm, LoginForm, UpdateAccountForm
-from flaskblog.models import User, Post
-from flask_wtf.file import FileField, FileAllowed
+#import os
+#import secrets
+#from PIL import Image
+#from flaskblog import app, db, bcrypt, routes
+#from flaskblog.forms import RegistrationForm, LoginForm, UpdateAccountForm
+#from flaskblog.models import User, Post
+#from flask_wtf.file import FileField, FileAllowed
 -------------------------------------------------------------------------------------
 
 app = Flask(__name__)
@@ -30,7 +30,7 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
 
-login_manager.login_message_category = 'info'
+#login_manager.login_message_category = 'info'
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -49,30 +49,30 @@ class User(db.Model, UserMixin):
     lastLogin = db.Column(db.String(80), nullable=False)
     
 #User account profile picture-------------------------------------------------------------------------------------------
-    image_file = db.Column(db.String(80), nullable=False, default='default.jpg')
-    posts = db.relationship('Post', backref='author', lazy=True)
+##    image_file = db.Column(db.String(80), nullable=False, default='default.jpg')
+ #   posts = db.relationship('Post', backref='author', lazy=True)
     
-    def __repr__(self):
-        return f"User('{self.username}', '{self.email}', '{self.image_file}')"
+ #   def __repr__(self):
+ #       return f"User('{self.username}', '{self.email}', '{self.image_file}')"
 
 
-class Post(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(100), nullable=False)
-    date_posted = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    content = db.Column(db.Text, nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+#class Post(db.Model):
+#    id = db.Column(db.Integer, primary_key=True)
+#    title = db.Column(db.String(100), nullable=False)
+ #   date_posted = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+  #  content = db.Column(db.Text, nullable=False)
+   # user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
 
-    def __repr__(self):
-        return f"Post('{self.title}', '{self.date_posted}')"
+    #def __repr__(self):
+     #   return f"Post('{self.title}', '{self.date_posted}')"
     
- class UpdateAccountForm(FlaskForm):
-    username = StringField('Username',
-                           validators=[DataRequired(), Length(min=2, max=20)])
-    email = StringField('Email',
-                        validators=[DataRequired(), Email()])
-    picture = FileField('Update Profile Picture', validators=[FileAllowed(['jpg', 'png'])])
-    submit = SubmitField('Update')
+# class UpdateAccountForm(FlaskForm):
+ #   username = StringField('Username',
+   #                        validators=[DataRequired(), Length(min=2, max=20)])
+  #  email = StringField('Email',
+    #                    validators=[DataRequired(), Email()])
+    #picture = FileField('Update Profile Picture', validators=[FileAllowed(['jpg', 'png'])])
+    #submit = SubmitField('Update')
 
 #Registeration Form----------------------------------------------------------------------------------------------------
 class RegisterForm(FlaskForm):
@@ -223,38 +223,38 @@ def download(upload_id):
 #------------------------------------------------------------------------------------------------------------
 
 #route for user account profile picture----------------------------------------------------------------------
-def save_picture(form_picture):
-    random_hex = secrets.token_hex(8)
-    _, f_ext = os.path.splitext(form_picture.filename)
-    picture_fn = random_hex + f_ext
-    picture_path = os.path.join(app.root_path, 'static/profile_pics', picture_fn)
+#def save_picture(form_picture):
+ #   random_hex = secrets.token_hex(8)
+  #  _, f_ext = os.path.splitext(form_picture.filename)
+   # picture_fn = random_hex + f_ext
+    #picture_path = os.path.join(app.root_path, 'static/profile_pics', picture_fn)
 
-    output_size = (125, 125)
-    i = Image.open(form_picture)
-    i.thumbnail(output_size)
-    i.save(picture_path)
+#    output_size = (125, 125)
+#    i = Image.open(form_picture)
+#    i.thumbnail(output_size)
+#    i.save(picture_path)
 
-    return picture_fn
+ #   return picture_fn
 
-@app.route("/account", methods=['GET', 'POST'])
-@login_required
-def account():
-    form = UpdateAccountForm()
-    if form.validate_on_submit():
-        if form.picture.data:
-            picture_file = save_picture(form.picture.data)
-            current_user.image_file = picture_file
-        current_user.username = form.username.data
-        current_user.email = form.email.data
-        db.session.commit()
-        flash('Your account has been updated!', 'success')
-        return redirect(url_for('account'))
-    elif request.method == 'GET':
-        form.username.data = current_user.username
-        form.email.data = current_user.email
-    image_file = url_for('static', filename='profile_pics/' + current_user.image_file)
-    return render_template('account.html', title='Account',
-                           image_file=image_file, form=form)
+#@app.route("/account", methods=['GET', 'POST'])
+#@login_required
+#def account():
+ #   form = UpdateAccountForm()
+  #  if form.validate_on_submit():
+   #     if form.picture.data:
+    #        picture_file = save_picture(form.picture.data)
+     #       current_user.image_file = picture_file
+      #  current_user.username = form.username.data
+       # current_user.email = form.email.data
+    #     db.session.commit()
+    #    flash('Your account has been updated!', 'success')
+    #    return redirect(url_for('account'))
+ #   elif request.method == 'GET':
+  #      form.username.data = current_user.username
+   #     form.email.data = current_user.email
+  #  image_file = url_for('static', filename='profile_pics/' + current_user.image_file)
+   # return render_template('account.html', title='Account',
+    #                       image_file=image_file, form=form)
 --------------------------------------------------------------------------------------------------------------------
 
 #MAIN CALL
