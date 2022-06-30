@@ -49,7 +49,11 @@
         let label = "{{labels}}"
         let dataSet = "{{data}}"
         label_new = label.split(",")
+        label_new = label.replaceAll("'",'').replaceAll('#','').replaceAll('&','').replaceAll('[','').replaceAll('3','').replaceAll('4','')
+        .replaceAll('9','').replaceAll(';','').replaceAll(']','').replace(',','')
+        
         dataSet_new = dataSet.split(",")
+        dataSet_new = dataSet.replace("'",'')
 
         console.log(label_new)
         console.log(dataSet_new)
