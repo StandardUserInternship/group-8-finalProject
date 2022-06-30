@@ -53,7 +53,8 @@
         .replaceAll('9','').replaceAll(';','').replaceAll(']','').replace(',','')
         
         dataSet_new = dataSet.split(",")
-        dataSet_new = dataSet.replace("'",'')
+        dataSet_new = dataSet.replaceAll("'",'').replaceAll('#','').replaceAll('&','').replaceAll('[','').replaceAll('3','').replaceAll('4','')
+        .replaceAll('9','').replaceAll(';','').replaceAll(']','').replace(',','')
 
         console.log(label_new)
         console.log(dataSet_new)
