@@ -38,47 +38,60 @@
 
 
 <body>
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.2/papaparse.min.js"></script>
     <h1>Content Page</h1>
     <p> DataSet Name: {{ session['dataSet'] }}</p>
     <p> GraphType: {{ session['graphType'] }}</p>
-    <p> Labels: {{ labels }}</p>
-    <p> Data: {{ data }}</p>
+    <p> Labels: {{ labels }} </p>
     <p> Number Of Columns: {{ col }}</p>
     <canvas id="myChart" width="400" height="400"></canvas>
     <script>
-        let label = "{{labels}}"
-        let dataSet = "{{data}}"
-        label_new = label.split(",")
-        label_new = label.replaceAll("'",'').replaceAll('#','').replaceAll('&','').replaceAll('[','').replaceAll('3','').replaceAll('4','')
-        .replaceAll('9','').replaceAll(';','').replaceAll(']','').replace(',','')
-        
-        dataSet_new = dataSet.split(",")
-        dataSet_new = dataSet.replaceAll("'",'').replaceAll('#','').replaceAll('&','').replaceAll('[','').replaceAll('3','').replaceAll('4','')
-        .replaceAll('9','').replaceAll(';','').replaceAll(']','').replace(',','')
-
-        console.log(label_new)
-        console.log(dataSet_new)
-
-        const ctx = document.getElementById('myChart').getContext('2d');
-        const myChart = new Chart(ctx, {
-            type: '{{ session['graphType'] }}',
-            data: {
-                labels: label_new,
-                datasets: [{
-                    label: '# of Votes',
-                    data: dataSet_new,
-
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                scales: {
-                    y: {
-                        beginAtZero: true
-                    }
+        Papa.parse("{{session['DOWNLOAD_PATH']}}",
+            {
+                download: true,
+                header: false,
+                skipEmptyLines: true,
+                complete: function (results) {
+                    console.log(results);
+                    //----------------------------------------------------------------
+                    const ctx = document.getElementById('myChart').getContext('2d');
+                    const myChart = new Chart(ctx, {
+                        type: "{{session['graphType']}}",
+                        data: {
+                            labels: results.meta['fields'],
+                            datasets: [{
+                                data: results.data.slice(1),
+                                backgroundColor: [
+                                    'rgba(255, 99, 132, 0.2)',
+                                    'rgba(54, 162, 235, 0.2)',
+                                    'rgba(255, 206, 86, 0.2)',
+                                    'rgba(75, 192, 192, 0.2)',
+                                    'rgba(153, 102, 255, 0.2)',
+                                    'rgba(255, 159, 64, 0.2)'
+                                ],
+                                borderColor: [
+                                    'rgba(255, 99, 132, 1)',
+                                    'rgba(54, 162, 235, 1)',
+                                    'rgba(255, 206, 86, 1)',
+                                    'rgba(75, 192, 192, 1)',
+                                    'rgba(153, 102, 255, 1)',
+                                    'rgba(255, 159, 64, 1)'
+                                ],
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            scales: {
+                                y: {
+                                    beginAtZero: true
+                                }
+                            }
+                        }
+                    });
                 }
-            }
-        });
+            });
+
     </script>
 </body>
+
 </html>
