@@ -11,25 +11,29 @@ from atexit import register
 from io import BytesIO
 from werkzeug.utils import secure_filename
 import os
+from pprint import pprint
 
+#Create application and required configs
 app = Flask(__name__)
 db = SQLAlchemy(app)
 bcrypt = Bcrypt(app)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db' 
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
 app.config['SECRET_KEY'] = 'mostsecretkeyevermade'
 
 UPLOAD_FOLDER = 'static/dataSets/'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
+#Setup login manager
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
 
+#User loader
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-#User Class
+# User Database Class
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     firstName = db.Column(db.String(20), nullable=False, unique=False)
@@ -40,14 +44,18 @@ class User(db.Model, UserMixin):
     dateCreated = db.Column(db.String(80), nullable=False)
     lastLogin = db.Column(db.String(80), nullable=False)
 
-
-#Registeration Form----------------------------------------------------------------------------------------------------
+# Registeration Form----------------------------------------------------------------------------------------------------
 class RegisterForm(FlaskForm):
-    firstName = StringField(validators=[InputRequired(), Length(min=4, max=20)], render_kw={"placeholder": "First Name"})
-    lastName = StringField(validators=[InputRequired(), Length(min=4, max=20)], render_kw={"placeholder": "Last Name"})
-    email = StringField(validators=[InputRequired(), Length(min=4, max=40)], render_kw={"placeholder": "Email"})
-    password = PasswordField(validators=[InputRequired(), Length(min=8, max=20)], render_kw={"placeholder": "Password"})
-    adminControl = PasswordField(validators=[Length(min=8, max=20)], render_kw={"placeholder": "Admin Password (Optional)"})
+    firstName = StringField(validators=[InputRequired(), Length(
+        min=4, max=20)], render_kw={"placeholder": "First Name"})
+    lastName = StringField(validators=[InputRequired(), Length(
+        min=4, max=20)], render_kw={"placeholder": "Last Name"})
+    email = StringField(validators=[InputRequired(), Length(
+        min=4, max=40)], render_kw={"placeholder": "Email"})
+    password = PasswordField(validators=[InputRequired(), Length(
+        min=8, max=20)], render_kw={"placeholder": "Password"})
+    adminControl = PasswordField(validators=[Length(min=8, max=20)], render_kw={
+                                 "placeholder": "Admin Password (Optional)"})
     now = datetime.now()
     dateCreated = now.strftime("%d/%m/%Y %H:%M:%S")
     lastLogin = now.strftime("%d/%m/%Y %H:%M:%S")
@@ -56,55 +64,86 @@ class RegisterForm(FlaskForm):
 
     def validate_email(self, email):
         if existing_user_email := User.query.filter_by(email=email.data).first():
-            raise ValidationError('That email already exists. Please choose a different one.')
+            raise ValidationError(
+                'That email already exists. Please choose a different one.')
 
     def validate_admin(self, adminControl):
         return "NotAdmin" if self.adminControl.data != "Admin12345" else "admin"
 
-#Login form
+# Login form
 class LoginForm(FlaskForm):
-    email = StringField(validators=[InputRequired(), Length(min=3, max=30)], render_kw={"placeholder": "Email"})
-    password = PasswordField(validators=[InputRequired(), Length(min=8, max=20)], render_kw={"placeholder": "Password"})
+    email = StringField(validators=[InputRequired(), Length(
+        min=3, max=30)], render_kw={"placeholder": "Email"})
+    password = PasswordField(validators=[InputRequired(), Length(
+        min=8, max=20)], render_kw={"placeholder": "Password"})
+    now = datetime.now()
+    lastLogin = now.strftime("%d/%m/%Y %H:%M:%S")
 
     submit = SubmitField('Login')
 
-#Login form
+# Dashboard form
 class DashForm(FlaskForm):
     dataSet = FileField()
-    graphType = SelectField('Data Set', choices=[('line', 'Line Graph'), ('bar', 'Bar Graph'), ('radar', 'Radar Graph')
-    , ('doughnut_pie', 'Doughnut & Pie Graph'), ('polar', 'Polar Graph'), ('bubble', 'Bubble Graph'), ('scatter', 'Scatter Graph')])
+    graphType = SelectField('Data Set', choices=[('line', 'Line Graph'), ('bar', 'Bar Graph'), ('radar', 'Radar Graph'), (
+        'doughnut_pie', 'Doughnut & Pie Graph'), ('polar', 'Polar Graph'), ('bubble', 'Bubble Graph'), ('scatter', 'Scatter Graph')])
 
     submit = SubmitField('Submit')
 
-#Page Routes-------------------------------------------------------------------------------------------------------------
-@app.route('/') 
+#Profile Form --- unfinished
+class ProfileForm(FlaskForm):
+    firstName = StringField(validators=[InputRequired(), Length(
+        min=4, max=20)], render_kw={"placeholder": "First Name"})
+    lastName = StringField(validators=[InputRequired(), Length(
+        min=4, max=20)], render_kw={"placeholder": "Last Name"})
+    email = StringField(validators=[InputRequired(), Length(
+        min=4, max=40)], render_kw={"placeholder": "Email"})
+
+    submit = SubmitField('Submit')
+
+# Page Routes-------------------------------------------------------------------------------------------------------------
+@app.route('/') # Index page
 def home():
     return redirect(url_for('login'))
 
-@app.route('/admin', methods=['GET', 'POST'])
+
+@app.route('/admin', methods=['GET', 'POST']) # Admin page - successful access
 @login_required
 def admin():
     user = current_user
-    if user.adminControl != "admin": 
+    if user.adminControl != "admin":
         return render_template("adminDeny.html")
     data = User.query.all()
     return render_template("admin.html", data=data)
 
-@app.route('/profile')
-@login_required 
-def profile():
-    user = current_user
-    return render_template("profile.html", user=user)
 
-@app.route('/dashboard', methods=['GET', 'POST'])
-@login_required 
+@app.route('/profile', methods=['GET', 'POST']) # Profile page - edit user information
+@login_required
+def profile():
+    form = ProfileForm()
+    user = current_user
+
+    if form.validate_on_submit():
+        curr_user = User.query.filter_by(email=form.email.data).first()
+        curr_user.firstName = form.firstName.data
+        curr_user.lastName = form.lastName.data
+        curr_user.email = form.email.data
+        db.session.commit()
+        user = current_user
+        form = ProfileForm()
+        render_template("profile.html", user=user, form=form)
+
+    return render_template("profile.html", user=user, form=form)
+
+
+@app.route('/dashboard', methods=['GET', 'POST']) # Dashboard page - Form for creating graph here, data sent to /content
+@login_required
 def dashboard():
-    form=DashForm()
+    form = DashForm()
 
     if form.validate_on_submit():
         f = form.dataSet.data
         filename = secure_filename(f.filename)
-        f.save(os.path.join(UPLOAD_FOLDER,filename))
+        f.save(os.path.join(UPLOAD_FOLDER, filename))
         session['dataSet'] = form.dataSet.data.filename
         session['graphType'] = form.graphType.data
         session['DOWNLOAD_PATH'] = UPLOAD_FOLDER + filename
@@ -113,39 +152,41 @@ def dashboard():
 
     return render_template("dashboard.html", form=form)
 
-@app.route('/content', methods=['GET', 'POST'])
-@login_required 
+
+@app.route('/content', methods=['GET', 'POST']) # Content page - Reads data from /dashboard then creates graph using chart.js --- unfinished
+@login_required
 def content():
     with open(session['DOWNLOAD_PATH'], 'r') as txt_file:
         data = txt_file.readlines()
 
-    data = [x[:-1] for x in data] #Removing all endlines
-    #Getting labels------------------
+    data = [x[:-1] for x in data]  # Removing all endlines
+    # Getting labels------------------
     labels = data[0]
     labels = labels.replace('"', '')
     labels = labels.replace(' ', '')
     labels = labels.split(',')
-    #--------------------------------
+    # --------------------------------
     new_data = data[1:]
 
-    return render_template("content.html", labels=labels, data= new_data, col=len(labels))
+    return render_template("content.html", labels=labels, data=new_data, col=len(labels))
 
-#Chart routes--------------------------------------------------------------------------------------------------
+# Chart routes--------------------------------------------------------------------------------------------------
 @app.route("/bar_chart")
 def bar_chart():
-    #can add legend and other headers later and change the example data to data from db
-    return render_template('bar_chart.html', title ='Bar Chart')
+    return render_template('bar_chart.html', title='Bar Chart')
+
 
 @app.route("/line_chart")
 def line_chart():
-    return render_template('line_chart.html', title ='Line Chart')
+    return render_template('line_chart.html', title='Line Chart')
+
 
 @app.route("/pie_chart")
 def pie_chart():
-    return render_template('pie_chart.html', title = 'Pie Chart')
+    return render_template('pie_chart.html', title='Pie Chart')
 
-#Auth Routes-------------------------------------------------------------------------------------------------
-@app.route('/login', methods=['GET', 'POST'])
+# Auth Routes-------------------------------------------------------------------------------------------------
+@app.route('/login', methods=['GET', 'POST']) # Login page - authenticates incoming users, forwards to /dashboard if successful
 def login():
     logout_user()
     form = LoginForm()
@@ -154,11 +195,15 @@ def login():
         if user := User.query.filter_by(email=form.email.data).first():
             if bcrypt.check_password_hash(user.password, form.password.data):
                 login_user(user)
+                curr_user = User.query.filter_by(email=form.email.data).first()
+                curr_user.lastLogin = form.lastLogin
+                db.session.commit()
                 return redirect(url_for('dashboard'))
- 
+
     return render_template("login.html", form=form)
 
-@app.route('/sign-up', methods=['GET', 'POST'])
+
+@app.route('/sign-up', methods=['GET', 'POST']) # Sign up page - allows user to create profile, forwards to /login if successful
 def sign_up():
     form = RegisterForm()
 
@@ -166,26 +211,27 @@ def sign_up():
         hashed_password = bcrypt.generate_password_hash(form.password.data)
         adminAccess = form.validate_admin(form.adminControl.data)
         new_user = User(firstName=form.firstName.data, lastName=form.lastName.data, email=form.email.data,
-         password=hashed_password, adminControl=adminAccess, dateCreated=form.dateCreated, lastLogin = form.lastLogin)
+                        password=hashed_password, adminControl=adminAccess, dateCreated=form.dateCreated, lastLogin=form.lastLogin)
         db.session.add(new_user)
         db.session.commit()
         return redirect(url_for('login'))
 
     return render_template("signup.html", form=form)
 
-@app.route('/logout', methods=['GET', 'POST'])
+
+@app.route('/logout', methods=['GET', 'POST']) # Logout button - log user out, then forwards to /login
 @login_required
 def logout():
     logout_user()
     return redirect(url_for('login'))
 
-#Database routes-----------------------------------------------------------------------------------------------------------
+# Database routes-----------------------------------------------------------------------------------------------------------
 @app.route('/upload', methods=['GET', 'POST'])
 def upload():
     db.create_all()
     if request.method == 'POST':
         file = request.files['file']
-        
+
         upload = User(filename=file.filename, data=file.read())
         db.session.add(upload)
         db.session.commit()
@@ -193,13 +239,13 @@ def upload():
         return f'Uploaded: {file.filename}'
     return render_template('upload.html')
 
+
 @app.route('/download/<upload_id>')
 def download(upload_id):
     upload = User.query.filter_by(id=upload_id).first()
     return send_file(BytesIO(upload.data), attachment_filename=upload.filename, as_attachment=True)
-#------------------------------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------------------------------------
 
-#MAIN CALL
+# MAIN CALL
 if __name__ == '__main__':
     app.run(debug=True)
-
