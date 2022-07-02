@@ -63,22 +63,23 @@
                     <h4 class="text-right">Profile Information</h4>
                 </div>
                 <div class="row mt-2">
-                    <div class="col-md-6"><label class="labels">First Name</label><input disabled class="form-control"
-                            placeholder="" value="{{ user.firstName }}"></div>
-                    <div class="col-md-6"><label class="labels">Last Name</label><input disabled class="form-control"
-                            value="{{ user.lastName }}"></div>
-                    <div class="col-md-6"><label class="labels">Date Created</label><input disabled class="form-control"
-                            value="{{ user.dateCreated }}"></div>
-                    <div class="col-md-6"><label class="labels">Last Login</label><input disabled class="form-control"
-                            value="{{ user.lastLogin }}"></div>
-                </div>
-                <div class="row mt-3">
-                    <div class="col-md-12"><label class="labels">Email</label><input disabled class="form-control"
-                            placeholder="Enter Email" value="{{ user.email }}"></div>
+                    <form method="POST" action="">
+                        {{ form.hidden_tag() }}
+                        <div class="col-md-6"><label class="labels">First Name</label><input class="form-control"
+                                placeholder="{{ user.firstName }}" vale="{{ form.firstName.data }}"></div>
+                        <div class="col-md-6"><label class="labels">Last Name</label><input class="form-control"
+                                placeholder="{{ user.lastName }}" vale="{{ form.lastName.data }}"></div>
+                        <div class="col-md-6"><label class="labels">Email</label><input class="form-control"
+                                placeholder="{{ user.email }}" vale="{{ form.email.data }}"></div>
+                        <div class="col-md-6"><label class="labels">Date Created</label><input disabled
+                                class="form-control" value="{{ user.dateCreated }}"></div>
+                        <div class="col-md-6"><label class="labels">Last Login</label><input disabled
+                                class="form-control" value="{{ user.lastLogin }}"></div>
+                        <div class="col-md-6">{{ form.submit }}</div>
+                    </form>
                 </div>
             </div>
         </div>
     </div>
-</div>
 </div>
 </div>
