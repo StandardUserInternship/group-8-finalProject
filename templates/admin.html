@@ -59,10 +59,15 @@
             <td> {{ user.lastLogin }} </td>
             <!-- implement ban button onClick change adminControl to "ban" or "unban"-->
             <td>
-                {% if user.adminControl == "banned12" %}
-                <button class="btn btn-outline-dark">Unban</button>
-                {% else %}
-                <button class="btn btn-outline-dark">Ban</button>
+                {% if user.adminControl == "admin" %}
+                <a type="button" class="btn btn-outline-secondary btn-small m-1"><i
+                    class="bi bi-person-x"></i>Cant Ban</a>
+                {% elif user.adminControl == "NotAdmin" %}
+                <a href="/admin/action/id={{ user.id }}" type="button" class="btn btn-outline-secondary btn-small m-1"><i
+                    class="bi bi-person-x"></i>Ban</a>
+                {% elif user.adminControl == "banned" %}
+                <a href="/admin/action/id={{ user.id }}" type="button" class="btn btn-outline-secondary btn-small m-1"><i
+                    class="bi bi-person-x"></i>Unban</a>
                 {% endif %}
             </td>
         </tr>
