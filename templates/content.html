@@ -44,6 +44,7 @@
     <p> GraphType: {{ session['graphType'] }}</p>
     <p> Labels: {{ labels }} </p>
     <p> Number Of Columns: {{ col }}</p>
+    <p> Data: {{ data }}</p>
     <canvas id="myChart" width="400" height="400"></canvas>
     <script>
         Papa.parse("{{session['DOWNLOAD_PATH']}}",
@@ -52,7 +53,7 @@
                 header: false,
                 skipEmptyLines: true,
                 complete: function (results) {
-                    console.log(results);
+                    console.log(results)
                     //----------------------------------------------------------------
                     const ctx = document.getElementById('myChart').getContext('2d');
                     const myChart = new Chart(ctx, {
@@ -90,7 +91,6 @@
                     });
                 }
             });
-
     </script>
 </body>
 
