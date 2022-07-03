@@ -8,7 +8,13 @@
     > Hashed passwords
     > Input validation
   2) User database
-    > First name, last name, email, (hashed) password, admin status, date created, last login (updates at each login) 
+    > First name
+    > last name
+    > email
+    > (hashed) password
+    > admin status
+    > date created
+    > last login (updates at each login) 
   3) User can input file to create a graph in the dahsboard
     > Form with file upload and graph type, redirects to a new page with the chart made
     > Data from the file in translated into json
@@ -16,13 +22,12 @@
   4) Profile tab to change personal content
     > Profile information wont change at the moment
   5) Admin tab accessiable only if you are an admin
-    > Will show database of users and allow an admin to ban or unban users (ban/unban unimplemented at the moment)
+    > Will show database of users and allow an admin to ban or unban non admin users
 ```
 **Next steps**
 ```
-  Profile page input will chnage data on the database
+  Profile page input will change data on the database
   Better chart validation and input
-  Implement the admin ban / unban buttons
 ```
 **How to run** 
 ```
