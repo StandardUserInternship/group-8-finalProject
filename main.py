@@ -11,7 +11,6 @@ from atexit import register
 from io import BytesIO
 from werkzeug.utils import secure_filename
 import os
-from pprint import pprint
 
 #Create application and required configs
 app = Flask(__name__)
@@ -47,13 +46,13 @@ class User(db.Model, UserMixin):
 # Registeration Form----------------------------------------------------------------------------------------------------
 class RegisterForm(FlaskForm):
     firstName = StringField(validators=[InputRequired(), Length(
-        min=4, max=20)], render_kw={"placeholder": "First Name"})
+        min=4, max=40)], render_kw={"placeholder": "First Name"})
     lastName = StringField(validators=[InputRequired(), Length(
-        min=4, max=20)], render_kw={"placeholder": "Last Name"})
+        min=4, max=40)], render_kw={"placeholder": "Last Name"})
     email = StringField(validators=[InputRequired(), Length(
-        min=4, max=40)], render_kw={"placeholder": "Email"})
+        min=6, max=40)], render_kw={"placeholder": "Email"})
     password = PasswordField(validators=[InputRequired(), Length(
-        min=8, max=20)], render_kw={"placeholder": "Password"})
+        min=8, max=40)], render_kw={"placeholder": "Password"})
     adminControl = PasswordField(validators=[Length(min=8, max=20)], render_kw={
                                  "placeholder": "Admin Password (Optional)"})
     now = datetime.now()
@@ -170,6 +169,19 @@ def content():
 
     return render_template("content.html", labels=labels, data=new_data, col=len(labels))
 
+@app.route('/admin/action/id=<userid>', methods=['GET', 'POST']) 
+@login_required
+def delete(userid):
+    a_user = User.query.filter(User.id == userid).one()
+    if a_user.adminControl == 'banned':
+        a_user.adminControl = 'NotAdmin'
+    else:
+        a_user.adminControl = 'banned'         
+        
+    db.session.commit()
+    data = User.query.all()
+    return render_template("admin.html", data=data)
+
 # Chart routes--------------------------------------------------------------------------------------------------
 @app.route("/bar_chart")
 def bar_chart():
@@ -193,7 +205,7 @@ def login():
 
     if form.validate_on_submit():
         if user := User.query.filter_by(email=form.email.data).first():
-            if bcrypt.check_password_hash(user.password, form.password.data):
+            if bcrypt.check_password_hash(user.password, form.password.data) and user.adminControl != 'banned':
                 login_user(user)
                 curr_user = User.query.filter_by(email=form.email.data).first()
                 curr_user.lastLogin = form.lastLogin
@@ -206,7 +218,6 @@ def login():
 @app.route('/sign-up', methods=['GET', 'POST']) # Sign up page - allows user to create profile, forwards to /login if successful
 def sign_up():
     form = RegisterForm()
-
     if form.validate_on_submit():
         hashed_password = bcrypt.generate_password_hash(form.password.data)
         adminAccess = form.validate_admin(form.adminControl.data)
