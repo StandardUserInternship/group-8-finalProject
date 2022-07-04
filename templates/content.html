@@ -45,6 +45,7 @@
     <p> Labels: {{ labels }} </p>
     <p> Number Of Columns: {{ col }}</p>
     <p> Data: {{ data }}</p>
+    <div>
     <canvas id="myChart" width="400" height="400"></canvas>
     <script>
         Papa.parse("{{session['DOWNLOAD_PATH']}}",

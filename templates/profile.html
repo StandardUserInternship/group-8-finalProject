@@ -65,16 +65,15 @@
                 <div class="row mt-2">
                     <form method="POST" action="">
                         {{ form.hidden_tag() }}
-                        <div class="col-md-6"><label class="labels">First Name</label><input class="form-control"
-                                placeholder="{{ user.firstName }}" vale="{{ form.firstName.data }}"></div>
-                        <div class="col-md-6"><label class="labels">Last Name</label><input class="form-control"
-                                placeholder="{{ user.lastName }}" vale="{{ form.lastName.data }}"></div>
-                        <div class="col-md-6"><label class="labels">Email</label><input class="form-control"
-                                placeholder="{{ user.email }}" vale="{{ form.email.data }}"></div>
+                        <div class="col-md-6"><label class="labels">First Name</label>{{ form.firstName(placeholder=user.firstName) }}</div>
+                        <div class="col-md-6"><label class="labels">Last Name</label>{{ form.lastName(placeholder=user.lastName) }}</div>
+                        <div class="col-md-6"><label class="labels">User Email</label>{{ form.email(placeholder=user.email) }}</div>
+                        
                         <div class="col-md-6"><label class="labels">Date Created</label><input disabled
                                 class="form-control" value="{{ user.dateCreated }}"></div>
                         <div class="col-md-6"><label class="labels">Last Login</label><input disabled
                                 class="form-control" value="{{ user.lastLogin }}"></div>
+                        <br></br>
                         <div class="col-md-6">{{ form.submit }}</div>
                     </form>
                 </div>
