@@ -119,12 +119,8 @@ def home():
 @app.route('/admin', methods=['GET', 'POST'])  # Admin page - successful access
 @login_required
 def admin():
-    user = current_user
-    if user.adminControl != "admin":
-        return render_template("adminDeny.html")
     data = User.query.all()
     return render_template("admin.html", data=data)
-
 
 
 # Profile page - edit user information - FIX ME
@@ -132,7 +128,7 @@ def admin():
 @login_required
 def profile():
     form = ProfileForm()
-    user=current_user
+    user = current_user
 
     if form.validate_on_submit():
         curr_user = User.query.filter_by(id=current_user.id).one()
@@ -142,7 +138,7 @@ def profile():
             curr_user.lastName = form.lastName.data
         if form.email.data != "":
             curr_user.email = form.email.data
-             
+
         db.session.commit()
     return render_template("profile.html", user=user, form=form)
 
@@ -230,6 +226,7 @@ def login():
                 login_user(user)
                 curr_user = User.query.filter_by(email=form.email.data).first()
                 curr_user.lastLogin = form.lastLogin
+                session['admin'] = 'admin' if curr_user.adminControl == 'admin' else 'NotAdmin'
                 db.session.commit()
                 return redirect(url_for('dashboard'))
 
