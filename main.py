@@ -12,7 +12,7 @@ from io import BytesIO
 from werkzeug.utils import secure_filename
 import os
 
-#Create application and required configs
+# Create application and required configs
 app = Flask(__name__)
 db = SQLAlchemy(app)
 bcrypt = Bcrypt(app)
@@ -22,17 +22,21 @@ app.config['SECRET_KEY'] = 'mostsecretkeyevermade'
 UPLOAD_FOLDER = 'static/dataSets/'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-#Setup login manager
+# Setup login manager
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
 
-#User loader
+# User loader
+
+
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
 
 # User Database Class
+
+
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     firstName = db.Column(db.String(20), nullable=False, unique=False)
@@ -44,6 +48,8 @@ class User(db.Model, UserMixin):
     lastLogin = db.Column(db.String(80), nullable=False)
 
 # Registeration Form----------------------------------------------------------------------------------------------------
+
+
 class RegisterForm(FlaskForm):
     firstName = StringField(validators=[InputRequired(), Length(
         min=4, max=40)], render_kw={"placeholder": "First Name"})
@@ -70,6 +76,8 @@ class RegisterForm(FlaskForm):
         return "NotAdmin" if self.adminControl.data != "Admin12345" else "admin"
 
 # Login form
+
+
 class LoginForm(FlaskForm):
     email = StringField(validators=[InputRequired(), Length(
         min=3, max=30)], render_kw={"placeholder": "Email"})
@@ -81,6 +89,8 @@ class LoginForm(FlaskForm):
     submit = SubmitField('Login')
 
 # Dashboard form
+
+
 class DashForm(FlaskForm):
     dataSet = FileField()
     graphType = SelectField('Data Set', choices=[('line', 'Line Graph'), ('bar', 'Bar Graph'), ('radar', 'Radar Graph'), (
@@ -88,24 +98,25 @@ class DashForm(FlaskForm):
 
     submit = SubmitField('Submit')
 
-#Profile Form --- unfinished
+# Profile Form --- unfinished
+
+
 class ProfileForm(FlaskForm):
-    firstName = StringField(validators=[InputRequired(), Length(
-        min=4, max=20)], render_kw={"placeholder": "First Name"})
-    lastName = StringField(validators=[InputRequired(), Length(
-        min=4, max=20)], render_kw={"placeholder": "Last Name"})
-    email = StringField(validators=[InputRequired(), Length(
-        min=4, max=40)], render_kw={"placeholder": "Email"})
+    firstName = StringField(render_kw={"placeholder": "First Name"})
+    lastName = StringField(render_kw={"placeholder": "Last Name"})
+    email = StringField(render_kw={"placeholder": "Email"})
 
     submit = SubmitField('Submit')
 
 # Page Routes-------------------------------------------------------------------------------------------------------------
-@app.route('/') # Index page
+
+
+@app.route('/')  # Index page
 def home():
     return redirect(url_for('login'))
 
 
-@app.route('/admin', methods=['GET', 'POST']) # Admin page - successful access
+@app.route('/admin', methods=['GET', 'POST'])  # Admin page - successful access
 @login_required
 def admin():
     user = current_user
@@ -115,26 +126,29 @@ def admin():
     return render_template("admin.html", data=data)
 
 
-@app.route('/profile', methods=['GET', 'POST']) # Profile page - edit user information
+
+# Profile page - edit user information - FIX ME
+@app.route('/profile', methods=['GET', 'POST'])
 @login_required
 def profile():
     form = ProfileForm()
-    user = current_user
+    user=current_user
 
     if form.validate_on_submit():
-        curr_user = User.query.filter_by(email=form.email.data).first()
-        curr_user.firstName = form.firstName.data
-        curr_user.lastName = form.lastName.data
-        curr_user.email = form.email.data
+        curr_user = User.query.filter_by(id=current_user.id).one()
+        if form.firstName.data != "":
+            curr_user.firstName = form.firstName.data
+        if form.lastName.data != "":
+            curr_user.lastName = form.lastName.data
+        if form.email.data != "":
+            curr_user.email = form.email.data
+             
         db.session.commit()
-        user = current_user
-        form = ProfileForm()
-        render_template("profile.html", user=user, form=form)
-
     return render_template("profile.html", user=user, form=form)
 
 
-@app.route('/dashboard', methods=['GET', 'POST']) # Dashboard page - Form for creating graph here, data sent to /content
+# Dashboard page - Form for creating graph here, data sent to /content
+@app.route('/dashboard', methods=['GET', 'POST'])
 @login_required
 def dashboard():
     form = DashForm()
@@ -152,7 +166,8 @@ def dashboard():
     return render_template("dashboard.html", form=form)
 
 
-@app.route('/content', methods=['GET', 'POST']) # Content page - Reads data from /dashboard then creates graph using chart.js --- unfinished
+# Content page - Reads data from /dashboard then creates graph using chart.js --- FIX ME
+@app.route('/content', methods=['GET', 'POST'])
 @login_required
 def content():
     with open(session['DOWNLOAD_PATH'], 'r') as txt_file:
@@ -169,20 +184,23 @@ def content():
 
     return render_template("content.html", labels=labels, data=new_data, col=len(labels))
 
-@app.route('/admin/action/id=<userid>', methods=['GET', 'POST']) 
+
+@app.route('/admin/action/id=<userid>', methods=['GET', 'POST'])
 @login_required
 def delete(userid):
     a_user = User.query.filter(User.id == userid).one()
     if a_user.adminControl == 'banned':
         a_user.adminControl = 'NotAdmin'
     else:
-        a_user.adminControl = 'banned'         
-        
+        a_user.adminControl = 'banned'
+
     db.session.commit()
     data = User.query.all()
     return render_template("admin.html", data=data)
 
 # Chart routes--------------------------------------------------------------------------------------------------
+
+
 @app.route("/bar_chart")
 def bar_chart():
     return render_template('bar_chart.html', title='Bar Chart')
@@ -198,7 +216,10 @@ def pie_chart():
     return render_template('pie_chart.html', title='Pie Chart')
 
 # Auth Routes-------------------------------------------------------------------------------------------------
-@app.route('/login', methods=['GET', 'POST']) # Login page - authenticates incoming users, forwards to /dashboard if successful
+
+
+# Login page - authenticates incoming users, forwards to /dashboard if successful
+@app.route('/login', methods=['GET', 'POST'])
 def login():
     logout_user()
     form = LoginForm()
@@ -215,7 +236,8 @@ def login():
     return render_template("login.html", form=form)
 
 
-@app.route('/sign-up', methods=['GET', 'POST']) # Sign up page - allows user to create profile, forwards to /login if successful
+# Sign up page - allows user to create profile, forwards to /login if successful
+@app.route('/sign-up', methods=['GET', 'POST'])
 def sign_up():
     form = RegisterForm()
     if form.validate_on_submit():
@@ -230,13 +252,16 @@ def sign_up():
     return render_template("signup.html", form=form)
 
 
-@app.route('/logout', methods=['GET', 'POST']) # Logout button - log user out, then forwards to /login
+# Logout button - log user out, then forwards to /login
+@app.route('/logout', methods=['GET', 'POST'])
 @login_required
 def logout():
     logout_user()
     return redirect(url_for('login'))
 
 # Database routes-----------------------------------------------------------------------------------------------------------
+
+
 @app.route('/upload', methods=['GET', 'POST'])
 def upload():
     db.create_all()
@@ -256,6 +281,7 @@ def download(upload_id):
     upload = User.query.filter_by(id=upload_id).first()
     return send_file(BytesIO(upload.data), attachment_filename=upload.filename, as_attachment=True)
 # ------------------------------------------------------------------------------------------------------------
+
 
 # MAIN CALL
 if __name__ == '__main__':
