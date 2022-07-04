@@ -20,13 +20,11 @@
     > Data from the file in translated into json
     > Chart is inaccurate at the moment
   4) Profile tab to change personal content
-    > Profile information wont change at the moment
   5) Admin tab accessiable only if you are an admin
     > Will show database of users and allow an admin to ban or unban non admin users
 ```
 **Next steps**
 ```
-  Profile page input will change data on the database
   Better chart validation and input
 ```
 **How to run** 
