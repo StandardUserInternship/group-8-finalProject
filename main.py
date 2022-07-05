@@ -28,15 +28,11 @@ login_manager.init_app(app)
 login_manager.login_view = 'login'
 
 # User loader
-
-
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
 
 # User Database Class
-
-
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     firstName = db.Column(db.String(20), nullable=False, unique=False)
@@ -48,8 +44,6 @@ class User(db.Model, UserMixin):
     lastLogin = db.Column(db.String(80), nullable=False)
 
 # Registeration Form----------------------------------------------------------------------------------------------------
-
-
 class RegisterForm(FlaskForm):
     firstName = StringField(validators=[InputRequired(), Length(
         min=4, max=40)], render_kw={"placeholder": "First Name"})
@@ -59,7 +53,7 @@ class RegisterForm(FlaskForm):
         min=6, max=40)], render_kw={"placeholder": "Email"})
     password = PasswordField(validators=[InputRequired(), Length(
         min=8, max=40)], render_kw={"placeholder": "Password"})
-    adminControl = PasswordField(validators=[Length(min=8, max=20)], render_kw={
+    adminControl = PasswordField(validators=[Length(min=10, max=10)], render_kw={
                                  "placeholder": "Admin Password (Optional)"})
     now = datetime.now()
     dateCreated = now.strftime("%d/%m/%Y %H:%M:%S")
@@ -76,8 +70,6 @@ class RegisterForm(FlaskForm):
         return "NotAdmin" if self.adminControl.data != "Admin12345" else "admin"
 
 # Login form
-
-
 class LoginForm(FlaskForm):
     email = StringField(validators=[InputRequired(), Length(
         min=3, max=30)], render_kw={"placeholder": "Email"})
@@ -89,8 +81,6 @@ class LoginForm(FlaskForm):
     submit = SubmitField('Login')
 
 # Dashboard form
-
-
 class DashForm(FlaskForm):
     dataSet = FileField()
     graphType = SelectField('Data Set', choices=[('line', 'Line Graph'), ('bar', 'Bar Graph'), ('radar', 'Radar Graph'), (
@@ -98,9 +88,7 @@ class DashForm(FlaskForm):
 
     submit = SubmitField('Submit')
 
-# Profile Form --- unfinished
-
-
+# Profile Form
 class ProfileForm(FlaskForm):
     firstName = StringField(render_kw={"placeholder": "First Name"})
     lastName = StringField(render_kw={"placeholder": "Last Name"})
@@ -109,8 +97,6 @@ class ProfileForm(FlaskForm):
     submit = SubmitField('Submit')
 
 # Page Routes-------------------------------------------------------------------------------------------------------------
-
-
 @app.route('/')  # Index page
 def home():
     return redirect(url_for('login'))
@@ -122,8 +108,7 @@ def admin():
     data = User.query.all()
     return render_template("admin.html", data=data)
 
-
-# Profile page - edit user information - FIX ME
+# Profile page, allows user to edit personal information (first, last, email)
 @app.route('/profile', methods=['GET', 'POST'])
 @login_required
 def profile():
@@ -180,7 +165,7 @@ def content():
 
     return render_template("content.html", labels=labels, data=new_data, col=len(labels))
 
-
+# Route to deal with ban/unban users from admin page
 @app.route('/admin/action/id=<userid>', methods=['GET', 'POST'])
 @login_required
 def delete(userid):
@@ -195,8 +180,6 @@ def delete(userid):
     return render_template("admin.html", data=data)
 
 # Chart routes--------------------------------------------------------------------------------------------------
-
-
 @app.route("/bar_chart")
 def bar_chart():
     return render_template('bar_chart.html', title='Bar Chart')
@@ -212,8 +195,6 @@ def pie_chart():
     return render_template('pie_chart.html', title='Pie Chart')
 
 # Auth Routes-------------------------------------------------------------------------------------------------
-
-
 # Login page - authenticates incoming users, forwards to /dashboard if successful
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -257,8 +238,6 @@ def logout():
     return redirect(url_for('login'))
 
 # Database routes-----------------------------------------------------------------------------------------------------------
-
-
 @app.route('/upload', methods=['GET', 'POST'])
 def upload():
     db.create_all()
@@ -278,7 +257,6 @@ def download(upload_id):
     upload = User.query.filter_by(id=upload_id).first()
     return send_file(BytesIO(upload.data), attachment_filename=upload.filename, as_attachment=True)
 # ------------------------------------------------------------------------------------------------------------
-
 
 # MAIN CALL
 if __name__ == '__main__':
