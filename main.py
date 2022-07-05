@@ -220,12 +220,13 @@ def sign_up():
     form = RegisterForm()
     if form.validate_on_submit():
         hashed_password = bcrypt.generate_password_hash(form.password.data)
-        adminAccess = form.validate_admin(form.adminControl.data)
-        new_user = User(firstName=form.firstName.data, lastName=form.lastName.data, email=form.email.data,
-                        password=hashed_password, adminControl=adminAccess, dateCreated=form.dateCreated, lastLogin=form.lastLogin)
-        db.session.add(new_user)
-        db.session.commit()
-        return redirect(url_for('login'))
+        if form.adminControl.data == "Admin12345":
+            adminAccess = form.validate_admin(form.adminControl.data)
+            new_user = User(firstName=form.firstName.data, lastName=form.lastName.data, email=form.email.data,
+                            password=hashed_password, adminControl=adminAccess, dateCreated=form.dateCreated, lastLogin=form.lastLogin)
+            db.session.add(new_user)
+            db.session.commit()
+            return redirect(url_for('login'))
 
     return render_template("signup.html", form=form)
 
