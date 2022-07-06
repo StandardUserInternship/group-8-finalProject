@@ -1,6 +1,6 @@
 **Final project by Group 8**
 ```
-  A python Flask webapp thatis made to take CSV files and turn them into charts using chart.js
+  A python Flask webapp that is made to take CSV files and turn them into charts using chart.js
 ```  
 **Implemented**
 ```
